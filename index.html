@@ -61,8 +61,10 @@ async function getTargetURL() {
   // 3) compile target.jpg right here on the phone (one time, ~10-30s)
   msg.textContent = 'Preparing the scan (first visit only)…';
   const img = new Image(); img.src = 'target.jpg';
-  await img.decode();
-  const c = new window.__Compiler();
+  try { await img.decode(); } catch (e) { img.src = 'target.jpeg'; await img.decode(); }
+  const Comp = window.__Compiler || (window.MINDAR && window.MINDAR.IMAGE && window.MINDAR.IMAGE.Compiler);
+  if (!Comp) throw new Error('scan library did not load');
+  const c = new Comp();
   await c.compileImageTargets([img], p => { msg.textContent = 'Preparing the scan… ' + Math.round(p) + '%'; });
   const data = await c.exportData();
   cachePut('target-v1', data);
@@ -98,7 +100,7 @@ edit.addEventListener('ended', () => {            // back to scanning so it can 
     buildScene(await getTargetURL());
     msg.textContent = 'Tap start, allow the camera, then point at the photo.';
     btn.disabled = false; btn.classList.add('ready');
-  } catch (e) { msg.textContent = 'Something went wrong loading. Please refresh.'; console.error(e); }
+  } catch (e) { msg.textContent = 'Error: ' + (e && e.message ? e.message : e) + ' (screenshot this and send it to Claude)'; console.error(e); }
 })();
 
 btn.addEventListener('click', async () => {
