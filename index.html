@@ -61,7 +61,7 @@
 <script>
 const $ = id => document.getElementById(id);
 const msg = $('msg'), btn = $('startBtn'), hint = $('hint'), finale = $('finale'), edit = $('edit'), welcome = $('welcome');
-let ar, scene, target;
+let ar, scene, target, found = false, priming = true;
 const vf = $('vf'), tapPlay = $('tapPlay');
 function showHint(on) { hint.style.display = on ? 'block' : 'none'; vf.style.display = on ? 'flex' : 'none'; }
 
@@ -98,8 +98,9 @@ function buildScene(url) {
     <a-entity mindar-image-target="targetIndex: 0"><a-plane id="screen" src="#ar" width="1" height="1.779" position="0 0 0.01"></a-plane></a-entity>
   </a-scene>`);
   scene = document.querySelector('a-scene'); ar = $('ar'); target = document.querySelector('[mindar-image-target]');
-  target.addEventListener('targetFound', () => { if (finale.style.display !== 'block') { showHint(false); ar.play(); } });
-  target.addEventListener('targetLost', () => { if (finale.style.display !== 'block') { showHint(true); ar.pause(); } });
+  ar.addEventListener('play', () => { if (!found && !priming && finale.style.display !== 'block') ar.pause(); });
+  target.addEventListener('targetFound', () => { if (finale.style.display !== 'block') { found = true; showHint(false); ar.play(); } });
+  target.addEventListener('targetLost', () => { if (finale.style.display !== 'block') { found = false; showHint(true); ar.pause(); } });
   ar.addEventListener('ended', () => { if (finale.style.display !== 'block') playFinale(); });
   ar.addEventListener('timeupdate', () => { if (ar.duration && ar.currentTime >= ar.duration - 0.15 && finale.style.display !== 'block') playFinale(); });
 }
@@ -130,7 +131,9 @@ btn.addEventListener('click', async () => {
   const vids = [ar, edit]; vids.forEach(v => v.muted = true);
   await Promise.allSettled(vids.map(v => { try { return v.play(); } catch (e) { return null; } }));
   vids.forEach(v => { v.pause(); v.currentTime = 0; v.muted = false; });
-  scene.components['mindar-image-system'].start();
+  priming = false;
+  try { await scene.systems['mindar-image-system'].start(); }
+  catch (e) { showHint(false); hint.style.display = 'block'; hint.textContent = 'Camera error: ' + (e && e.message ? e.message : e) + '. Check Settings > Safari > Camera.'; }
 });
 </script>
 </body>
