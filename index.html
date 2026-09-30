@@ -12,7 +12,10 @@
 <script>window.__Compiler = window.MINDAR && window.MINDAR.IMAGE && window.MINDAR.IMAGE.Compiler;</script>
 <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 <style>
-  html, body { margin: 0; height: 100%; background: #000; color: #fff; font-family: -apple-system, system-ui, sans-serif; overflow: hidden; }
+  html { background: #000; }
+  html, body { margin: 0; height: 100%; color: #fff; font-family: -apple-system, system-ui, sans-serif; overflow: hidden; }
+  body { background: transparent; }
+  a-scene, .a-canvas { background: transparent !important; }
   #start { position: fixed; inset: 0; z-index: 30; display: flex; flex-direction: column; align-items: center;
            justify-content: center; gap: 18px; background: #0b0b0f; text-align: center; padding: 24px; }
   #start h2 { font-family: 'Great Vibes', 'Snell Roundhand', cursive; font-weight: 400; font-size: 3rem; margin: 0; }
