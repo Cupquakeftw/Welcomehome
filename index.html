@@ -7,33 +7,34 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image.prod.js"></script>
 <style>
   html, body { margin: 0; height: 100%; background: #000; color: #fff; font-family: -apple-system, system-ui, sans-serif; overflow: hidden; }
   video { display: block; }
   #cam { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; background: #000; }
   #start { position: fixed; inset: 0; z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center;
-           gap: 18px; background: #0b0b0f; text-align: center; padding: 24px; }
-  #start h2 { font-family: 'Great Vibes', 'Snell Roundhand', cursive; font-weight: 400; font-size: 3rem; margin: 0; }
-  #start p { margin: 0; opacity: .8; max-width: 320px; line-height: 1.4; }
-  #startBtn { font-size: 18px; padding: 14px 32px; border: 0; border-radius: 999px; background: #fff; color: #000; opacity: .4; }
+           gap: 18px; background: #0b0b0f center / cover no-repeat; text-align: center; padding: 24px; }
+  #start::before { content: ''; position: absolute; inset: 0; background: rgba(0,0,0,.42); }
+  #start > * { position: relative; }
+  #start h2 { font-family: 'Great Vibes', 'Snell Roundhand', cursive; font-weight: 400; font-size: 3.4rem; margin: 0; color: rgba(255,255,255,.92); text-shadow: 0 2px 20px rgba(0,0,0,.5); }
+  #start p { margin: 0; max-width: 300px; line-height: 1.4; text-shadow: 0 1px 8px rgba(0,0,0,.7); }
+  #startBtn { font-size: 18px; padding: 14px 34px; border: 0; border-radius: 999px; background: rgba(255,255,255,.92); color: #000; opacity: .4; }
   #startBtn.ready { opacity: 1; }
   #vf { position: fixed; inset: 0; z-index: 9; display: none; align-items: center; justify-content: center; pointer-events: none; }
-  #vf .frame { position: relative; width: min(68vw, 33vh); aspect-ratio: 480 / 854; border-radius: 18px; box-shadow: 0 0 0 100vmax rgba(0,0,0,.38); animation: pulse 2.2s ease-in-out infinite; }
-  #vf i { position: absolute; width: 34px; height: 34px; border: 0 solid rgba(255,255,255,.95); }
-  #vf i:nth-child(1) { top: -3px; left: -3px; border-top-width: 4px; border-left-width: 4px; border-top-left-radius: 18px; }
-  #vf i:nth-child(2) { top: -3px; right: -3px; border-top-width: 4px; border-right-width: 4px; border-top-right-radius: 18px; }
-  #vf i:nth-child(3) { bottom: -3px; left: -3px; border-bottom-width: 4px; border-left-width: 4px; border-bottom-left-radius: 18px; }
-  #vf i:nth-child(4) { bottom: -3px; right: -3px; border-bottom-width: 4px; border-right-width: 4px; border-bottom-right-radius: 18px; }
+  #vf .frame { position: relative; width: min(60vw, 31vh); aspect-ratio: 480 / 854; border-radius: 16px; box-shadow: 0 0 0 100vmax rgba(0,0,0,.4); --g: 0; }
+  #vf i { position: absolute; width: 34px; height: 34px; border: 0 solid rgba(255,255,255,.95); transition: border-color .2s; }
+  #vf .frame.ok i { border-color: #8dffb0; }
+  #vf i:nth-child(1) { top: -3px; left: -3px; border-top-width: 4px; border-left-width: 4px; border-top-left-radius: 16px; }
+  #vf i:nth-child(2) { top: -3px; right: -3px; border-top-width: 4px; border-right-width: 4px; border-top-right-radius: 16px; }
+  #vf i:nth-child(3) { bottom: -3px; left: -3px; border-bottom-width: 4px; border-left-width: 4px; border-bottom-left-radius: 16px; }
+  #vf i:nth-child(4) { bottom: -3px; right: -3px; border-bottom-width: 4px; border-right-width: 4px; border-bottom-right-radius: 16px; }
   #vf b { position: absolute; left: 6%; right: 6%; height: 2px; background: rgba(255,255,255,.85); box-shadow: 0 0 12px 2px rgba(255,255,255,.6); animation: scan 2.4s ease-in-out infinite alternate; }
   @keyframes scan { from { top: 6%; } to { top: 94%; } }
-  @keyframes pulse { 50% { transform: scale(1.015); } }
-  #hint { position: fixed; left: 0; right: 0; bottom: calc(28px + env(safe-area-inset-bottom, 0px)); z-index: 10; text-align: center;
-          font-size: 15px; padding: 0 16px; display: none; text-shadow: 0 1px 4px #000; }
-  .layer { position: fixed; inset: 0; background: #000; display: none; }
-  .layer video { width: 100%; height: 100%; object-fit: cover; }
-  #arlayer { z-index: 30; }
-  #finale { z-index: 40; }
+  #hint { position: fixed; left: 0; right: 0; bottom: calc(40px + env(safe-area-inset-bottom, 0px)); z-index: 10; text-align: center;
+          font-size: 16px; padding: 0 16px; display: none; text-shadow: 0 1px 6px #000; }
+  #skip { position: fixed; left: 0; right: 0; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); z-index: 11; text-align: center; font-size: 13px;
+          opacity: .65; text-decoration: underline; display: none; }
+  #finale { position: fixed; inset: 0; z-index: 40; background: #000; display: none; }
+  #finale video { width: 100%; height: 100%; object-fit: cover; }
   #welcome { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none;
              font-family: 'Great Vibes', 'Snell Roundhand', 'Apple Chancery', cursive; font-size: clamp(3.4rem, 19vw, 7rem);
              color: rgba(255,255,255,.72); text-shadow: 0 2px 24px rgba(0,0,0,.35); text-align: center; line-height: 1.05;
@@ -45,10 +46,10 @@
 </head>
 <body>
 <video id="cam" playsinline webkit-playsinline muted autoplay></video>
-<div id="vf"><div class="frame"><i></i><i></i><i></i><i></i><b></b></div></div>
+<div id="vf"><div class="frame" id="frame"><i></i><i></i><i></i><i></i><b></b></div></div>
 <div id="hint"></div>
-<div id="arlayer" class="layer"><video id="ar" src="ar.mp4" playsinline webkit-playsinline preload="auto"></video></div>
-<div id="finale" class="layer">
+<div id="skip">Trouble scanning? Tap here</div>
+<div id="finale">
   <video id="edit" src="edit.mp4" playsinline webkit-playsinline preload="auto"></video>
   <div id="welcome">welcome home</div>
   <button id="tapPlay">Tap to play</button>
@@ -61,88 +62,133 @@
 
 <script>
 const $ = id => document.getElementById(id);
-const cam = $('cam'), ar = $('ar'), edit = $('edit'), msg = $('msg'), btn = $('startBtn'), hint = $('hint'), vf = $('vf');
-const arlayer = $('arlayer'), finale = $('finale'), welcome = $('welcome'), tapPlay = $('tapPlay');
-const IMG = window.MINDAR && window.MINDAR.IMAGE;
-let targetData = null, controller = null, state = 'idle';   // idle | scanning | ar | finale
+const cam = $('cam'), edit = $('edit'), msg = $('msg'), btn = $('startBtn'), hint = $('hint'), vf = $('vf'), frame = $('frame'), skip = $('skip');
+const finale = $('finale'), welcome = $('welcome'), tapPlay = $('tapPlay');
+
+// ---------- matcher: compares what the camera sees inside the frame with the original photo ----------
+const FW = 24, FH = 43, CW = 36, CH = 64;           // template cells / capture cells (capture = frame + 25% margin each side)
+const THRESH = 0.66, NEED = 5;                      // score needed, and how many checks in a row
+let Tn = null;                                      // normalised template
+
+function blockAvg(data, w, h, k) {                  // RGBA pixels -> (h/k)*(w/k)*3 floats
+  const ow = Math.floor(w / k), oh = Math.floor(h / k), out = new Float32Array(ow * oh * 3), inv = 1 / (k * k);
+  for (let y = 0; y < oh; y++) for (let x = 0; x < ow; x++) {
+    let r = 0, g = 0, b = 0;
+    for (let yy = 0; yy < k; yy++) { let i = ((y * k + yy) * w + x * k) * 4; for (let xx = 0; xx < k; xx++, i += 4) { r += data[i]; g += data[i + 1]; b += data[i + 2]; } }
+    const o = (y * ow + x) * 3; out[o] = r * inv; out[o + 1] = g * inv; out[o + 2] = b * inv;
+  }
+  return out;
+}
+function normalise(a) {                             // per-colour-channel zero mean / unit std; returns mean std
+  const n = a.length / 3, m = [0, 0, 0], s = [0, 0, 0];
+  for (let i = 0; i < a.length; i += 3) { m[0] += a[i]; m[1] += a[i + 1]; m[2] += a[i + 2]; }
+  for (let c = 0; c < 3; c++) m[c] /= n;
+  for (let i = 0; i < a.length; i += 3) for (let c = 0; c < 3; c++) { const d = a[i + c] - m[c]; s[c] += d * d; }
+  for (let c = 0; c < 3; c++) s[c] = Math.sqrt(s[c] / n);
+  const out = new Float32Array(a.length);
+  for (let i = 0; i < a.length; i += 3) for (let c = 0; c < 3; c++) out[i + c] = (a[i + c] - m[c]) / Math.max(s[c], 1e-3);
+  return { out, s: (s[0] + s[1] + s[2]) / 3 };
+}
+function window_(a, aw, ah, x0, y0, w, h, ow, oh) { // bilinear resample of a sub-window
+  const out = new Float32Array(ow * oh * 3);
+  for (let j = 0; j < oh; j++) {
+    let ys = y0 + (j + 0.5) * h / oh - 0.5; ys = Math.min(Math.max(ys, 0), ah - 1.001); const yi = Math.floor(ys), fy = ys - yi;
+    for (let i = 0; i < ow; i++) {
+      let xs = x0 + (i + 0.5) * w / ow - 0.5; xs = Math.min(Math.max(xs, 0), aw - 1.001); const xi = Math.floor(xs), fx = xs - xi;
+      for (let c = 0; c < 3; c++) {
+        const A = a[(yi * aw + xi) * 3 + c], B = a[(yi * aw + xi + 1) * 3 + c], C = a[((yi + 1) * aw + xi) * 3 + c], D = a[((yi + 1) * aw + xi + 1) * 3 + c];
+        out[(j * ow + i) * 3 + c] = (A * (1 - fx) + B * fx) * (1 - fy) + (C * (1 - fx) + D * fx) * fy;
+      }
+    }
+  }
+  return out;
+}
+function score(cap) {                               // best match over small shifts and zooms
+  let best = -1;
+  for (const k of [0.85, 1.0, 1.15]) {
+    const w = FW * k, h = FH * k;
+    for (let y0 = 0; y0 <= CH - h + 0.01; y0 += 2) for (let x0 = 0; x0 <= CW - w + 0.01; x0 += 2) {
+      const P = window_(cap, CW, CH, x0, y0, w, h, FW, FH), N = normalise(P);
+      if (N.s < 4) continue;                        // flat / blank view
+      let d = 0; for (let i = 0; i < Tn.length; i++) d += N.out[i] * Tn[i];
+      d /= Tn.length; if (d > best) best = d;
+    }
+  }
+  return best;
+}
+if (typeof module !== 'undefined') module.exports = { score, normalise, setT: t => { Tn = t; } };
+
+// ---------- camera + flow ----------
+const work = document.createElement('canvas'); work.width = 288; work.height = 512;
+const wctx = work.getContext('2d', { willReadFrequently: true }); wctx.imageSmoothingQuality = 'high';
+let state = 'idle', streak = 0, timer = null, scanStart = 0;
 
 function say(t) { hint.textContent = t; }
-function showScan(on) { vf.style.display = on ? 'flex' : 'none'; hint.style.display = on ? 'block' : 'none'; if (on) say('Point your camera at the photo'); }
+function showScan(on) { vf.style.display = on ? 'flex' : 'none'; hint.style.display = on ? 'block' : 'none'; if (!on) skip.style.display = 'none'; }
 
-// ---- tiny IndexedDB cache so the scan target is only built once per phone ----
-const db = () => new Promise((res, rej) => { const r = indexedDB.open('arcache', 1); r.onupgradeneeded = () => r.result.createObjectStore('k'); r.onsuccess = () => res(r.result); r.onerror = rej; });
-async function cacheGet(k) { try { const d = await db(); return await new Promise(r => { const q = d.transaction('k').objectStore('k').get(k); q.onsuccess = () => r(q.result); q.onerror = () => r(null); }); } catch (e) { return null; } }
-async function cachePut(k, v) { try { const d = await db(); d.transaction('k', 'readwrite').objectStore('k').put(v, k); } catch (e) {} }
-
-async function loadTarget() {
-  try { const r = await fetch('targets.mind'); if (r.ok) return await r.arrayBuffer(); } catch (e) {}
-  const cached = await cacheGet('target-v1');
-  if (cached) return cached;
-  msg.textContent = 'Preparing the scan (first visit only)…';
-  const img = new Image(); img.src = 'target.jpg';
-  try { await img.decode(); } catch (e) { img.src = 'target.jpeg'; await img.decode(); }
-  const c = new IMG.Compiler();
-  await c.compileImageTargets([img], p => { msg.textContent = 'Preparing the scan… ' + Math.round(p) + '%'; });
-  const data = await c.exportData();
-  cachePut('target-v1', data);
-  return data;
+function captureScore() {
+  const W = cam.clientWidth, H = cam.clientHeight, vw = cam.videoWidth, vh = cam.videoHeight;
+  if (!vw) return -1;
+  const s = Math.max(W / vw, H / vh), ox = (vw * s - W) / 2, oy = (vh * s - H) / 2, r = frame.getBoundingClientRect();
+  const x = r.left - r.width * 0.25, y = r.top - r.height * 0.25, w = r.width * 1.5, h = r.height * 1.5;
+  wctx.drawImage(cam, (x + ox) / s, (y + oy) / s, w / s, h / s, 0, 0, work.width, work.height);
+  const px = wctx.getImageData(0, 0, work.width, work.height).data;
+  return score(blockAvg(px, work.width, work.height, 8));
 }
 
+function tick() {
+  if (state !== 'scanning') return;
+  let sc = -1; try { sc = captureScore(); } catch (e) { console.error(e); }
+  streak = sc >= THRESH ? streak + 1 : 0;
+  frame.classList.toggle('ok', sc >= THRESH - 0.1);
+  say(sc >= THRESH - 0.1 ? 'Hold steady…' : 'Line the photo up inside the frame');
+  if (streak >= NEED) return found();
+  if (Date.now() - scanStart > 25000) skip.style.display = 'block';
+  timer = setTimeout(tick, 200);
+}
+function startScan() { state = 'scanning'; streak = 0; scanStart = Date.now(); showScan(true); frame.classList.remove('ok'); tick(); }
+
+function found() {
+  if (state !== 'scanning') return;
+  state = 'finale'; clearTimeout(timer);
+  say('Got it ✓'); frame.classList.add('ok');
+  setTimeout(() => {
+    showScan(false);
+    finale.style.display = 'block'; edit.currentTime = 0; tapPlay.style.display = 'none';
+    edit.play().catch(() => { tapPlay.style.display = 'block'; });
+    setTimeout(() => welcome.classList.add('show'), 400);
+  }, 600);
+}
+skip.addEventListener('click', found_force);
+function found_force() { if (state === 'scanning') found(); }
+edit.addEventListener('ended', () => { welcome.classList.remove('show'); finale.style.display = 'none'; startScan(); });
+tapPlay.addEventListener('click', () => { tapPlay.style.display = 'none'; edit.play(); });
+
+// ---------- load the original photo (start-screen background + matching template) ----------
+function loadImg(src) { return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; }); }
 (async () => {
   try {
-    if (!IMG) throw new Error('scan library did not load (check your internet)');
-    if (!IMG.Controller) throw new Error('scan library missing Controller: ' + Object.keys(IMG).join(','));
-    targetData = await loadTarget();
-    msg.textContent = 'Tap Start, allow the camera, then point at the photo.';
+    let img; try { img = await loadImg('target.jpg'); } catch (e) { img = await loadImg('target.jpeg'); }
+    $('start').style.backgroundImage = 'url(' + img.src + ')';
+    const c = document.createElement('canvas'); c.width = 96; c.height = 172; const cx = c.getContext('2d');
+    const sc = Math.max(96 / img.width, 172 / img.height), dw = img.width * sc, dh = img.height * sc;
+    cx.drawImage(img, (96 - dw) / 2, (172 - dh) / 2, dw, dh);
+    Tn = normalise(blockAvg(cx.getImageData(0, 0, 96, 172).data, 96, 172, 4)).out;
+    msg.textContent = 'Tap start, allow the camera, then scan the photo.';
     btn.disabled = false; btn.classList.add('ready');
-  } catch (e) { msg.textContent = 'Error: ' + (e && e.message ? e.message : e); console.error(e); }
+  } catch (e) { msg.textContent = 'Error: could not load the photo (target.jpg)'; console.error(e); }
 })();
-
-// ---- flow ----
-function onFound() {
-  if (state !== 'scanning') return;
-  state = 'ar';
-  try { controller.stopProcessVideo(); } catch (e) {}
-  showScan(false);
-  arlayer.style.display = 'block'; ar.currentTime = 0;
-  ar.play().catch(() => {});
-}
-function toFinale() {
-  if (state !== 'ar') return;
-  state = 'finale';
-  ar.pause(); arlayer.style.display = 'none';
-  finale.style.display = 'block'; edit.currentTime = 0; tapPlay.style.display = 'none';
-  edit.play().catch(() => { tapPlay.style.display = 'block'; });
-  setTimeout(() => welcome.classList.add('show'), 400);
-}
-function backToScan() {
-  welcome.classList.remove('show'); finale.style.display = 'none'; edit.pause();
-  state = 'scanning'; showScan(true);
-  try { controller.processVideo(cam); } catch (e) {}
-}
-ar.addEventListener('ended', toFinale);
-ar.addEventListener('timeupdate', () => { if (ar.duration && ar.currentTime >= ar.duration - 0.15) toFinale(); });
-edit.addEventListener('ended', backToScan);
-tapPlay.addEventListener('click', () => { tapPlay.style.display = 'none'; edit.play(); });
 
 btn.addEventListener('click', async () => {
   btn.disabled = true;
-  // iOS only lets videos play after a tap, so unlock both right now, in this same tap
-  const vids = [ar, edit]; vids.forEach(v => v.muted = true);
-  const unlock = Promise.allSettled(vids.map(v => { try { return v.play(); } catch (e) { return null; } }));
+  edit.muted = true;                                 // unlock the edit video inside this tap (iOS rule)
+  const unlock = edit.play().catch(() => {});
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } } });
     cam.srcObject = stream; await cam.play();
     if (!cam.videoWidth) await new Promise(r => cam.addEventListener('loadeddata', r, { once: true }));
-    await unlock; vids.forEach(v => { v.pause(); v.currentTime = 0; v.muted = false; });
-    $('start').style.display = 'none'; showScan(true); say('Starting the scanner…');
-    controller = new IMG.Controller({
-      inputWidth: cam.videoWidth, inputHeight: cam.videoHeight, maxTrack: 1, warmupTolerance: 3, missTolerance: 10,
-      onUpdate: d => { if (d.type === 'updateMatrix' && d.worldMatrix) onFound(); }
-    });
-    await controller.addImageTargetsFromBuffer(targetData);
-    state = 'scanning'; say('Point your camera at the photo');
-    controller.processVideo(cam);
+    await unlock; edit.pause(); edit.currentTime = 0; edit.muted = false;
+    $('start').style.display = 'none'; startScan();
   } catch (e) {
     $('start').style.display = 'none'; vf.style.display = 'none'; hint.style.display = 'block';
     say('Error: ' + (e && e.message ? e.message : e) + ' — check Settings > Safari > Camera');
