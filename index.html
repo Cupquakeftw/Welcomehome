@@ -7,23 +7,17 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/aframe@1.5.0/dist/aframe.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image.prod.js"></script>
-<script>window.__Compiler = window.MINDAR && window.MINDAR.IMAGE && window.MINDAR.IMAGE.Compiler;</script>
-<script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 <style>
-  html { background: #000; }
-  html, body { margin: 0; height: 100%; color: #fff; font-family: -apple-system, system-ui, sans-serif; overflow: hidden; }
-  body { background: transparent; }
-  a-scene, .a-canvas { background: transparent !important; }
-  #start { position: fixed; inset: 0; z-index: 30; display: flex; flex-direction: column; align-items: center;
-           justify-content: center; gap: 18px; background: #0b0b0f; text-align: center; padding: 24px; }
+  html, body { margin: 0; height: 100%; background: #000; color: #fff; font-family: -apple-system, system-ui, sans-serif; overflow: hidden; }
+  video { display: block; }
+  #cam { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; background: #000; }
+  #start { position: fixed; inset: 0; z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center;
+           gap: 18px; background: #0b0b0f; text-align: center; padding: 24px; }
   #start h2 { font-family: 'Great Vibes', 'Snell Roundhand', cursive; font-weight: 400; font-size: 3rem; margin: 0; }
-  #start p { margin: 0; opacity: .75; max-width: 300px; line-height: 1.4; }
+  #start p { margin: 0; opacity: .8; max-width: 320px; line-height: 1.4; }
   #startBtn { font-size: 18px; padding: 14px 32px; border: 0; border-radius: 999px; background: #fff; color: #000; opacity: .4; }
   #startBtn.ready { opacity: 1; }
-  #hint { position: fixed; left: 0; right: 0; bottom: calc(28px + env(safe-area-inset-bottom, 0px)); z-index: 10;
-          text-align: center; font-size: 15px; display: none; text-shadow: 0 1px 4px #000; }
   #vf { position: fixed; inset: 0; z-index: 9; display: none; align-items: center; justify-content: center; pointer-events: none; }
   #vf .frame { position: relative; width: min(68vw, 33vh); aspect-ratio: 480 / 854; border-radius: 18px; box-shadow: 0 0 0 100vmax rgba(0,0,0,.38); animation: pulse 2.2s ease-in-out infinite; }
   #vf i { position: absolute; width: 34px; height: 34px; border: 0 solid rgba(255,255,255,.95); }
@@ -34,106 +28,126 @@
   #vf b { position: absolute; left: 6%; right: 6%; height: 2px; background: rgba(255,255,255,.85); box-shadow: 0 0 12px 2px rgba(255,255,255,.6); animation: scan 2.4s ease-in-out infinite alternate; }
   @keyframes scan { from { top: 6%; } to { top: 94%; } }
   @keyframes pulse { 50% { transform: scale(1.015); } }
-  #tapPlay { position: absolute; z-index: 5; left: 50%; bottom: 14%; transform: translateX(-50%); display: none; font-size: 18px; padding: 14px 28px; border: 0; border-radius: 999px; background: rgba(255,255,255,.9); color: #000; }
-  #finale { position: fixed; inset: 0; z-index: 20; background: #000; display: none; }
-  #finale video { width: 100%; height: 100%; object-fit: cover; }
+  #hint { position: fixed; left: 0; right: 0; bottom: calc(28px + env(safe-area-inset-bottom, 0px)); z-index: 10; text-align: center;
+          font-size: 15px; padding: 0 16px; display: none; text-shadow: 0 1px 4px #000; }
+  .layer { position: fixed; inset: 0; background: #000; display: none; }
+  .layer video { width: 100%; height: 100%; object-fit: cover; }
+  #arlayer { z-index: 30; }
+  #finale { z-index: 40; }
   #welcome { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none;
              font-family: 'Great Vibes', 'Snell Roundhand', 'Apple Chancery', cursive; font-size: clamp(3.4rem, 19vw, 7rem);
              color: rgba(255,255,255,.72); text-shadow: 0 2px 24px rgba(0,0,0,.35); text-align: center; line-height: 1.05;
              padding: 0 6vw; opacity: 0; transition: opacity 1.6s ease; }
   #welcome.show { opacity: 1; }
+  #tapPlay { position: absolute; z-index: 5; left: 50%; bottom: 14%; transform: translateX(-50%); display: none; font-size: 18px;
+             padding: 14px 28px; border: 0; border-radius: 999px; background: rgba(255,255,255,.9); color: #000; }
 </style>
 </head>
 <body>
+<video id="cam" playsinline webkit-playsinline muted autoplay></video>
+<div id="vf"><div class="frame"><i></i><i></i><i></i><i></i><b></b></div></div>
+<div id="hint"></div>
+<div id="arlayer" class="layer"><video id="ar" src="ar.mp4" playsinline webkit-playsinline preload="auto"></video></div>
+<div id="finale" class="layer">
+  <video id="edit" src="edit.mp4" playsinline webkit-playsinline preload="auto"></video>
+  <div id="welcome">welcome home</div>
+  <button id="tapPlay">Tap to play</button>
+</div>
 <div id="start">
   <h2>welcome home</h2>
   <p id="msg">Getting ready…</p>
   <button id="startBtn" disabled>Start</button>
 </div>
-<div id="vf"><div class="frame"><i></i><i></i><i></i><i></i><b></b></div></div>
-<div id="hint">Point your camera at the photo</div>
-<div id="finale">
-  <video id="edit" src="edit.mp4" playsinline webkit-playsinline preload="auto"></video>
-  <div id="welcome">welcome home</div>
-  <button id="tapPlay">Tap to play</button>
-</div>
 
 <script>
 const $ = id => document.getElementById(id);
-const msg = $('msg'), btn = $('startBtn'), hint = $('hint'), finale = $('finale'), edit = $('edit'), welcome = $('welcome');
-let ar, scene, target, found = false, priming = true;
-const vf = $('vf'), tapPlay = $('tapPlay');
-function showHint(on) { hint.style.display = on ? 'block' : 'none'; vf.style.display = on ? 'flex' : 'none'; }
+const cam = $('cam'), ar = $('ar'), edit = $('edit'), msg = $('msg'), btn = $('startBtn'), hint = $('hint'), vf = $('vf');
+const arlayer = $('arlayer'), finale = $('finale'), welcome = $('welcome'), tapPlay = $('tapPlay');
+const IMG = window.MINDAR && window.MINDAR.IMAGE;
+let targetData = null, controller = null, state = 'idle';   // idle | scanning | ar | finale
 
-// --- tiny IndexedDB cache so the scan target is only compiled once per phone ---
+function say(t) { hint.textContent = t; }
+function showScan(on) { vf.style.display = on ? 'flex' : 'none'; hint.style.display = on ? 'block' : 'none'; if (on) say('Point your camera at the photo'); }
+
+// ---- tiny IndexedDB cache so the scan target is only built once per phone ----
 const db = () => new Promise((res, rej) => { const r = indexedDB.open('arcache', 1); r.onupgradeneeded = () => r.result.createObjectStore('k'); r.onsuccess = () => res(r.result); r.onerror = rej; });
 async function cacheGet(k) { try { const d = await db(); return await new Promise(r => { const q = d.transaction('k').objectStore('k').get(k); q.onsuccess = () => r(q.result); q.onerror = () => r(null); }); } catch (e) { return null; } }
 async function cachePut(k, v) { try { const d = await db(); d.transaction('k', 'readwrite').objectStore('k').put(v, k); } catch (e) {} }
 
-async function getTargetURL() {
-  // 1) a pre-made targets.mind in the folder wins
-  try { const r = await fetch('targets.mind'); if (r.ok) return URL.createObjectURL(await r.blob()); } catch (e) {}
-  // 2) cached compile from a previous visit
+async function loadTarget() {
+  try { const r = await fetch('targets.mind'); if (r.ok) return await r.arrayBuffer(); } catch (e) {}
   const cached = await cacheGet('target-v1');
-  if (cached) return URL.createObjectURL(new Blob([cached]));
-  // 3) compile target.jpg right here on the phone (one time, ~10-30s)
+  if (cached) return cached;
   msg.textContent = 'Preparing the scan (first visit only)…';
   const img = new Image(); img.src = 'target.jpg';
   try { await img.decode(); } catch (e) { img.src = 'target.jpeg'; await img.decode(); }
-  const Comp = window.__Compiler || (window.MINDAR && window.MINDAR.IMAGE && window.MINDAR.IMAGE.Compiler);
-  if (!Comp) throw new Error('scan library did not load');
-  const c = new Comp();
+  const c = new IMG.Compiler();
   await c.compileImageTargets([img], p => { msg.textContent = 'Preparing the scan… ' + Math.round(p) + '%'; });
   const data = await c.exportData();
   cachePut('target-v1', data);
-  return URL.createObjectURL(new Blob([data]));
+  return data;
 }
 
-function buildScene(url) {
-  document.body.insertAdjacentHTML('afterbegin', `
-  <a-scene mindar-image="imageTargetSrc: ${url}; autoStart: false; uiLoading: no; uiScanning: no; filterMinCF: 0.0001; filterBeta: 0.001"
-           color-space="sRGB" renderer="colorManagement: true" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
-    <a-assets><video id="ar" src="ar.mp4" preload="auto" playsinline webkit-playsinline crossorigin="anonymous"></video></a-assets>
-    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-    <a-entity mindar-image-target="targetIndex: 0"><a-plane id="screen" src="#ar" width="1" height="1.779" position="0 0 0.01"></a-plane></a-entity>
-  </a-scene>`);
-  scene = document.querySelector('a-scene'); ar = $('ar'); target = document.querySelector('[mindar-image-target]');
-  ar.addEventListener('play', () => { if (!found && !priming && finale.style.display !== 'block') ar.pause(); });
-  target.addEventListener('targetFound', () => { if (finale.style.display !== 'block') { found = true; showHint(false); ar.play(); } });
-  target.addEventListener('targetLost', () => { if (finale.style.display !== 'block') { found = false; showHint(true); ar.pause(); } });
-  ar.addEventListener('ended', () => { if (finale.style.display !== 'block') playFinale(); });
-  ar.addEventListener('timeupdate', () => { if (ar.duration && ar.currentTime >= ar.duration - 0.15 && finale.style.display !== 'block') playFinale(); });
-}
+(async () => {
+  try {
+    if (!IMG) throw new Error('scan library did not load (check your internet)');
+    if (!IMG.Controller) throw new Error('scan library missing Controller: ' + Object.keys(IMG).join(','));
+    targetData = await loadTarget();
+    msg.textContent = 'Tap Start, allow the camera, then point at the photo.';
+    btn.disabled = false; btn.classList.add('ready');
+  } catch (e) { msg.textContent = 'Error: ' + (e && e.message ? e.message : e); console.error(e); }
+})();
 
-function playFinale() {
-  ar.pause(); showHint(false);
+// ---- flow ----
+function onFound() {
+  if (state !== 'scanning') return;
+  state = 'ar';
+  try { controller.stopProcessVideo(); } catch (e) {}
+  showScan(false);
+  arlayer.style.display = 'block'; ar.currentTime = 0;
+  ar.play().catch(() => {});
+}
+function toFinale() {
+  if (state !== 'ar') return;
+  state = 'finale';
+  ar.pause(); arlayer.style.display = 'none';
   finale.style.display = 'block'; edit.currentTime = 0; tapPlay.style.display = 'none';
   edit.play().catch(() => { tapPlay.style.display = 'block'; });
   setTimeout(() => welcome.classList.add('show'), 400);
 }
+function backToScan() {
+  welcome.classList.remove('show'); finale.style.display = 'none'; edit.pause();
+  state = 'scanning'; showScan(true);
+  try { controller.processVideo(cam); } catch (e) {}
+}
+ar.addEventListener('ended', toFinale);
+ar.addEventListener('timeupdate', () => { if (ar.duration && ar.currentTime >= ar.duration - 0.15) toFinale(); });
+edit.addEventListener('ended', backToScan);
 tapPlay.addEventListener('click', () => { tapPlay.style.display = 'none'; edit.play(); });
-edit.addEventListener('ended', () => {            // back to scanning so it can be replayed
-  welcome.classList.remove('show'); finale.style.display = 'none';
-  ar.currentTime = 0; showHint(true);
-});
-
-(async () => {
-  try {
-    buildScene(await getTargetURL());
-    msg.textContent = 'Tap start, allow the camera, then point at the photo.';
-    btn.disabled = false; btn.classList.add('ready');
-  } catch (e) { msg.textContent = 'Error: ' + (e && e.message ? e.message : e) + ' (screenshot this and send it to Claude)'; console.error(e); }
-})();
 
 btn.addEventListener('click', async () => {
-  $('start').style.display = 'none'; showHint(true);
-  // iOS only allows video playback after a tap, so "unlock" both videos now
+  btn.disabled = true;
+  // iOS only lets videos play after a tap, so unlock both right now, in this same tap
   const vids = [ar, edit]; vids.forEach(v => v.muted = true);
-  await Promise.allSettled(vids.map(v => { try { return v.play(); } catch (e) { return null; } }));
-  vids.forEach(v => { v.pause(); v.currentTime = 0; v.muted = false; });
-  priming = false;
-  try { await scene.systems['mindar-image-system'].start(); }
-  catch (e) { showHint(false); hint.style.display = 'block'; hint.textContent = 'Camera error: ' + (e && e.message ? e.message : e) + '. Check Settings > Safari > Camera.'; }
+  const unlock = Promise.allSettled(vids.map(v => { try { return v.play(); } catch (e) { return null; } }));
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } } });
+    cam.srcObject = stream; await cam.play();
+    if (!cam.videoWidth) await new Promise(r => cam.addEventListener('loadeddata', r, { once: true }));
+    await unlock; vids.forEach(v => { v.pause(); v.currentTime = 0; v.muted = false; });
+    $('start').style.display = 'none'; showScan(true); say('Starting the scanner…');
+    controller = new IMG.Controller({
+      inputWidth: cam.videoWidth, inputHeight: cam.videoHeight, maxTrack: 1, warmupTolerance: 3, missTolerance: 10,
+      onUpdate: d => { if (d.type === 'updateMatrix' && d.worldMatrix) onFound(); }
+    });
+    await controller.addImageTargetsFromBuffer(targetData);
+    state = 'scanning'; say('Point your camera at the photo');
+    controller.processVideo(cam);
+  } catch (e) {
+    $('start').style.display = 'none'; vf.style.display = 'none'; hint.style.display = 'block';
+    say('Error: ' + (e && e.message ? e.message : e) + ' — check Settings > Safari > Camera');
+    console.error(e);
+  }
 });
 </script>
 </body>
