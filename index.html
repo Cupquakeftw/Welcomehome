@@ -21,6 +21,17 @@
   #startBtn.ready { opacity: 1; }
   #hint { position: fixed; left: 0; right: 0; bottom: calc(28px + env(safe-area-inset-bottom, 0px)); z-index: 10;
           text-align: center; font-size: 15px; display: none; text-shadow: 0 1px 4px #000; }
+  #vf { position: fixed; inset: 0; z-index: 9; display: none; align-items: center; justify-content: center; pointer-events: none; }
+  #vf .frame { position: relative; width: min(68vw, 33vh); aspect-ratio: 480 / 854; border-radius: 18px; box-shadow: 0 0 0 100vmax rgba(0,0,0,.38); animation: pulse 2.2s ease-in-out infinite; }
+  #vf i { position: absolute; width: 34px; height: 34px; border: 0 solid rgba(255,255,255,.95); }
+  #vf i:nth-child(1) { top: -3px; left: -3px; border-top-width: 4px; border-left-width: 4px; border-top-left-radius: 18px; }
+  #vf i:nth-child(2) { top: -3px; right: -3px; border-top-width: 4px; border-right-width: 4px; border-top-right-radius: 18px; }
+  #vf i:nth-child(3) { bottom: -3px; left: -3px; border-bottom-width: 4px; border-left-width: 4px; border-bottom-left-radius: 18px; }
+  #vf i:nth-child(4) { bottom: -3px; right: -3px; border-bottom-width: 4px; border-right-width: 4px; border-bottom-right-radius: 18px; }
+  #vf b { position: absolute; left: 6%; right: 6%; height: 2px; background: rgba(255,255,255,.85); box-shadow: 0 0 12px 2px rgba(255,255,255,.6); animation: scan 2.4s ease-in-out infinite alternate; }
+  @keyframes scan { from { top: 6%; } to { top: 94%; } }
+  @keyframes pulse { 50% { transform: scale(1.015); } }
+  #tapPlay { position: absolute; z-index: 5; left: 50%; bottom: 14%; transform: translateX(-50%); display: none; font-size: 18px; padding: 14px 28px; border: 0; border-radius: 999px; background: rgba(255,255,255,.9); color: #000; }
   #finale { position: fixed; inset: 0; z-index: 20; background: #000; display: none; }
   #finale video { width: 100%; height: 100%; object-fit: cover; }
   #welcome { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none;
@@ -36,16 +47,20 @@
   <p id="msg">Getting ready…</p>
   <button id="startBtn" disabled>Start</button>
 </div>
+<div id="vf"><div class="frame"><i></i><i></i><i></i><i></i><b></b></div></div>
 <div id="hint">Point your camera at the photo</div>
 <div id="finale">
   <video id="edit" src="edit.mp4" playsinline webkit-playsinline preload="auto"></video>
   <div id="welcome">welcome home</div>
+  <button id="tapPlay">Tap to play</button>
 </div>
 
 <script>
 const $ = id => document.getElementById(id);
 const msg = $('msg'), btn = $('startBtn'), hint = $('hint'), finale = $('finale'), edit = $('edit'), welcome = $('welcome');
 let ar, scene, target;
+const vf = $('vf'), tapPlay = $('tapPlay');
+function showHint(on) { hint.style.display = on ? 'block' : 'none'; vf.style.display = on ? 'flex' : 'none'; }
 
 // --- tiny IndexedDB cache so the scan target is only compiled once per phone ---
 const db = () => new Promise((res, rej) => { const r = indexedDB.open('arcache', 1); r.onupgradeneeded = () => r.result.createObjectStore('k'); r.onsuccess = () => res(r.result); r.onerror = rej; });
@@ -80,19 +95,22 @@ function buildScene(url) {
     <a-entity mindar-image-target="targetIndex: 0"><a-plane id="screen" src="#ar" width="1" height="1.779" position="0 0 0.01"></a-plane></a-entity>
   </a-scene>`);
   scene = document.querySelector('a-scene'); ar = $('ar'); target = document.querySelector('[mindar-image-target]');
-  target.addEventListener('targetFound', () => { if (finale.style.display !== 'block') { hint.style.display = 'none'; ar.play(); } });
-  target.addEventListener('targetLost', () => { if (finale.style.display !== 'block') { hint.style.display = 'block'; ar.pause(); } });
-  ar.addEventListener('ended', playFinale);
+  target.addEventListener('targetFound', () => { if (finale.style.display !== 'block') { showHint(false); ar.play(); } });
+  target.addEventListener('targetLost', () => { if (finale.style.display !== 'block') { showHint(true); ar.pause(); } });
+  ar.addEventListener('ended', () => { if (finale.style.display !== 'block') playFinale(); });
+  ar.addEventListener('timeupdate', () => { if (ar.duration && ar.currentTime >= ar.duration - 0.15 && finale.style.display !== 'block') playFinale(); });
 }
 
 function playFinale() {
-  ar.pause(); hint.style.display = 'none';
-  finale.style.display = 'block'; edit.currentTime = 0; edit.play();
+  ar.pause(); showHint(false);
+  finale.style.display = 'block'; edit.currentTime = 0; tapPlay.style.display = 'none';
+  edit.play().catch(() => { tapPlay.style.display = 'block'; });
   setTimeout(() => welcome.classList.add('show'), 400);
 }
+tapPlay.addEventListener('click', () => { tapPlay.style.display = 'none'; edit.play(); });
 edit.addEventListener('ended', () => {            // back to scanning so it can be replayed
   welcome.classList.remove('show'); finale.style.display = 'none';
-  ar.currentTime = 0; hint.style.display = 'block';
+  ar.currentTime = 0; showHint(true);
 });
 
 (async () => {
@@ -104,9 +122,11 @@ edit.addEventListener('ended', () => {            // back to scanning so it can 
 })();
 
 btn.addEventListener('click', async () => {
-  $('start').style.display = 'none'; hint.style.display = 'block';
+  $('start').style.display = 'none'; showHint(true);
   // iOS only allows video playback after a tap, so "unlock" both videos now
-  for (const v of [ar, edit]) { try { await v.play(); v.pause(); v.currentTime = 0; } catch (e) {} }
+  const vids = [ar, edit]; vids.forEach(v => v.muted = true);
+  await Promise.allSettled(vids.map(v => { try { return v.play(); } catch (e) { return null; } }));
+  vids.forEach(v => { v.pause(); v.currentTime = 0; v.muted = false; });
   scene.components['mindar-image-system'].start();
 });
 </script>
